@@ -1,752 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swish Shot</title>
-    <style>
-        :root {
-            --bg-dark: #0f172a;
-            --panel-bg: #1e293b;
-            --primary-orange: #f97316;
-            --primary-hover: #ea580c;
-            --text-light: #f8fafc;
-            --text-muted: #94a3b8;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centered Layout with Working Elements</title>
+  <style>
+    /* 1. Base Setup & Page Centering */
+    body {
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column; /* Stacks leaderboard, card, and buttons vertically */
+      justify-content: center; /* Centers the whole stack vertically */
+      align-items: center;    /* Centers the whole stack horizontally */
+      min-height: 100vh;
+      background-color: #e0eafc;
+      font-family: sans-serif;
+      box-sizing: border-box;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-        }
+    /* 2. Leaderboard Styles */
+    .leaderboard {
+      background-color: #2c3e50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px; /* Pushes the main card down */
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    /* 3. Main Centered Card Styles */
+    .centered-card {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
 
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            background: radial-gradient(circle, #2563eb 0%, #1d4ed8 100%);
-            border: 4px solid #fff;
-            border-radius: 12px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-        }
+    /* 4. Button Container & Interactive Elements */
+    .button-group {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      position: relative; /* Safety measure for layer stacking */
+      z-index: 10;        /* Ensures buttons stay on top and clickable */
+      transition: background 0.2s;
+    }
 
-        /* Screen overlays */
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
-            z-index: 10;
-            padding: 30px;
-        }
-
-        .screen.hidden {
-            display: none !important;
-        }
-
-        /* Main Menu Specifics */
-        #main-menu {
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-        }
-
-        .header-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .game-title {
-            font-size: 4rem;
-            font-weight: 900;
-            color: var(--primary-orange);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 3px 3px 0px #fff, 6px 6px 0px rgba(0,0,0,0.4);
-            animation: bounce 2s infinite alternate;
-        }
-
-        @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(-10px); }
-        }
-
-        .currency-display {
-            background: rgba(255,255,255,0.1);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .currency-icon {
-            color: var(--primary-orange);
-            font-size: 1.3rem;
-        }
-
-        .menu-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            width: 100%;
-            flex-grow: 1;
-            margin-top: 20px;
-            min-height: 0; /* allows grid items to shrink */
-        }
-
-        .menu-nav {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .btn {
-            background-color: var(--primary-orange);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-        }
-
-        .btn:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background-color: #475569;
-        }
-        .btn-secondary:hover {
-            background-color: #334155;
-        }
-
-        /* Leaderboard block on Menu */
-        .leaderboard-panel {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-bottom: 2px solid var(--primary-orange);
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-        }
-
-        .leaderboard-list {
-            list-style: none;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 6px;
-            font-size: 0.95rem;
-        }
-
-        .leaderboard-item.player-row {
-            background: rgba(249, 115, 22, 0.2);
-            border: 1px solid var(--primary-orange);
-            font-weight: bold;
-        }
-
-        /* Layout Structure for Inside Submenus */
-        .submenu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #334155;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        .submenu-body {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        /* Settings Grid Layout */
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .settings-section {
-            background: rgba(0,0,0,0.2);
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        select, input[type="text"] {
-            background-color: #334155;
-            color: white;
-            border: 1px solid #475569;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .keybind-btn {
-            background: #334155;
-            color: #fff;
-            border: 1px solid #475569;
-            padding: 8px 16px;
-            border-radius: 6px;
-            min-width: 100px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .keybind-btn.waiting {
-            background: var(--primary-orange);
-            border-color: #fff;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-
-        /* Skins Tab/Grid */
-        .skins-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-
-        .skin-card {
-            background: var(--panel-bg);
-            border: 2px solid #334155;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            transition: transform 0.2s;
-        }
-
-        .skin-card:hover {
-            transform: scale(1.02);
-        }
-
-        .skin-card.equipped {
-            border-color: #22c55e;
-            background: linear-gradient(180deg, var(--panel-bg) 0%, rgba(34, 197, 94, 0.1) 100%);
-        }
-
-        .skin-preview {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .skin-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-        }
-
-        .skin-ability {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-
-        .skin-btn {
-            width: 100%;
-            padding: 8px;
-            font-size: 0.9rem;
-            border-radius: 6px;
-        }
-
-        /* Pause Screen styling Overlay */
-        #pause-menu {
-            background: rgba(15, 23, 42, 0.85);
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .pause-title {
-            font-size: 3rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-        }
-
-        .pause-box {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 250px;
-        }
-
-        /* HUD elements during actual runtime */
-        #game-hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        .hud-score {
-            background: rgba(0,0,0,0.6);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-        }
-
-        .hud-pause-btn {
-            pointer-events: auto;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .hud-pause-btn:hover {
-            background: var(--primary-orange);
-        }
-    </style>
+    button:hover {
+      background-color: #2980b9;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="game-container">
-        
-        <!-- HUD layer -->
-        <div id="game-hud" class="hidden">
-            <div class="hud-score" id="score-board">HOME 0 - 0 AWAY</div>
-            <button class="hud-pause-btn" onclick="pauseGame()">PAUSE</button>
-        </div>
+  <!-- Top Element: Leaderboard -->
+  <div class="leaderboard">
+    <h3>🏆 Leaderboard: 1,250 pts</h3>
+  </div>
 
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-        <!-- MAIN MENU -->
-        <div id="main-menu" class="screen">
-            <div class="header-container">
-                <div class="game-title">Swish Shot</div>
-                <div class="currency-display">
-                    <span class="currency-icon">🏀</span>
-                    <span id="menu-balls">0</span> Basketballs
-                </div>
-            </div>
-
-            <div class="menu-layout">
-                <div class="menu-nav">
-                    <button class="btn" onclick="switchScreen('play-settings')">Play Match</button>
-                    <button class="btn btn-secondary" onclick="switchScreen('skins-menu')">Skins & Abilities</button>
-                    <button class="btn btn-secondary" onclick="switchScreen('settings-menu')">Settings / Controls</button>
-                </div>
-                <div class="leaderboard-panel">
-                    <div class="panel-title">Global Leaderboard</div>
-                    <ul class="leaderboard-list" id="leaderboard-ui-list">
-                        <!-- Populated by JS -->
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- MATCH / MODE SETTINGS -->
-        <div id="play-settings" class="screen hidden">
-            <div class="submenu-header">
-                <h2>Match Configuration</h2>
-                <div class="currency-display">🏀 <span id="play-balls">0</span></div>
-            </div>
-            <div class="submenu-body" style="display:flex; flex-direction:column; gap:25px;">
-                <div class="setting-row" style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px;">
-                    <label style="font-weight:bold; font-size:1.2rem;">Match Type</label>
-                    <select id="match-type-select" style="font-size:1.1rem; padding:10px 20px;">
-                        <option value="1v1">1 vs 1 (Solo Showdown)</option>
-                        <option value="2v2">2 vs 2 (Team Play)</option>
-                        <option value="3v3">3 vs 3 (Full Court Chaos)</option>
-                    </select>
-                </div>
-                <div class="setting-row" style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px;">
-                    <label style="font-weight:bold; font-size:1.2rem;">Bot Difficulty</label>
-                    <select id="bot-diff-select" style="font-size:1.1rem; padding:10px 20px;">
-                        <option value="random">Random Mix (Easy/Normal/Hard)</option>
-                        <option value="easy">Easy Bots Only</option>
-                        <option value="normal">Normal Bots Only</option>
-                        <option value="hard">Hard Bots Only</option>
-                    </select>
-                </div>
-                <div style="margin-top:auto; display:flex; gap:15px;">
-                    <button class="btn btn-secondary" style="flex:1;" onclick="switchScreen('main-menu')">Back</button>
-                    <button class="btn" style="flex:2; background-color:#22c55e;" onclick="startMatch()">Tip Off Game</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- SETTINGS & CONTROLS -->
-        <div id="settings-menu" class="screen hidden">
-            <div class="submenu-header">
-                <h2>Settings & Keybinds</h2>
-                <button class="btn btn-secondary" style="padding:6px 16px;" onclick="switchScreen('main-menu')">Save & Back</button>
-            </div>
-            <div class="submenu-body">
-                <div class="settings-grid">
-                    <div class="settings-section">
-                        <h3 style="margin-bottom:15px; color:var(--primary-orange);">Custom Controls</h3>
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Click on a button below, then press your desired physical keyboard key to re-bind it.</p>
-                        
-                        <div class="setting-row">
-                            <span>Move Left</span>
-                            <div class="keybind-btn" id="bind-left" onclick="startKeybind('left')">A</div>
-                        </div>
-                        <div class="setting-row">
-                            <span>Move Right</span>
-                            <div class="keybind-btn" id="bind-right" onclick="startKeybind('right')">D</div>
-                        </div>
-                        <div class="setting-row">
-                            <span>Jump</span>
-                            <div class="keybind-btn" id="bind-jump" onclick="startKeybind('jump')">W</div>
-                        </div>
-                        <div class="setting-row">
-                            <span>Dribble / Steal</span>
-                            <div class="keybind-btn" id="bind-dribble" onclick="startKeybind('dribble')">F</div>
-                        </div>
-                        <div class="setting-row">
-                            <span>Shoot / Block</span>
-                            <div class="keybind-btn" id="bind-shoot" onclick="startKeybind('shoot')">Space</div>
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3 style="margin-bottom:15px; color:var(--primary-orange);">Game Options</h3>
-                        <div class="setting-row">
-                            <span>Music & Sound</span>
-                            <select id="audio-toggle">
-                                <option value="on">Enabled</option>
-                                <option value="off">Muted</option>
-                            </select>
-                        </div>
-                        <div class="setting-row">
-                            <span>Visual Particles</span>
-                            <select id="particles-toggle">
-                                <option value="on">On (High Performance)</option>
-                                <option value="off">Off (Smooth)</option>
-                            </select>
-                        </div>
-                        <div style="margin-top:40px; padding:15px; background:rgba(255,255,255,0.05); border-radius:8px; border:1px dashed rgba(255,255,255,0.2);">
-                            <h4 style="font-size:0.9rem; margin-bottom:5px;">💡 System Check Pass:</h4>
-                            <p style="font-size:0.8rem; color:var(--text-muted);">Active engine isolation layer is enabled. Input handlers will safely release focus when customizing configuration properties.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SKINS SHOP -->
-        <div id="skins-menu" class="screen hidden">
-            <div class="submenu-header">
-                <h2>Locker Room & Abilities Shop</h2>
-                <div class="currency-display">🏀 <span id="shop-balls">0</span></div>
-            </div>
-            <div class="submenu-body">
-                <div class="skins-grid" id="skins-grid-container">
-                    <!-- Dynamic Generation -->
-                </div>
-                <div style="margin-top:25px;">
-                    <button class="btn btn-secondary" style="width:100%;" onclick="switchScreen('main-menu')">Back to Gym</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAUSE INTERCEPT SCREEN -->
-        <div id="pause-menu" class="screen hidden">
-            <div class="pause-title">GAME PAUSED</div>
-            <div class="pause-box">
-                <button class="btn" onclick="resumeGame()">Resume</button>
-                <button class="btn btn-secondary" onclick="openSettingsFromPause()">Settings</button>
-                <button class="btn btn-secondary" style="background-color:#ef4444;" onclick="quitToMenu()">Exit to Menu</button>
-            </div>
-        </div>
-
+  <!-- Center Element: Main Content Box -->
+  <div class="centered-card">
+    <h1>Game Dashboard</h1>
+    <p>Everything is aligned, visible, and fully functional.</p>
+    
+    <!-- Nested Element: Interactive Buttons -->
+    <div class="button-group">
+      <button onclick="alert('Button 1 Works!')">Action 1</button>
+      <button onclick="alert('Button 2 Works!')">Action 2</button>
     </div>
+  </div>
 
-    <script>
-        // --- PERSISTENT DATA LAYER & SAVESTATES ---
-        let playerData = {
-            balls: 150, // Initial balance to test purchasing
-            currentSkin: 'classic',
-            unlockedSkins: ['classic'],
-            leaderboard: [
-                {name: "LeBot James (Hard)", score: 2450},
-                {name: "Stephen Blurry (Hard)", score: 2100},
-                {name: "Kevin DeBot (Normal)", score: 1350},
-                {name: "You (Player)", score: 150, isPlayer: true},
-                {name: "ShaqtinBot (Easy)", score: 90},
-                {name: "AirBuddy (Easy)", score: 40}
-            ]
-        };
-
-        // --- KEYBINDS SYSTEM ---
-        let keybinds = {
-            left: 'KeyA',
-            right: 'KeyD',
-            jump: 'KeyW',
-            dribble: 'KeyF',
-            shoot: 'Space'
-        };
-
-        let activeBindingKey = null; // Holds index if currently mapping a bind
-
-        // --- 15 DEFINED SKINS WITH CUSTOM ABILITIES ---
-        const SKINS_DATABASE = [
-            { id: 'classic', name: 'Classic Baller', cost: 0, color: '#f97316', perk: 'No special buffs', speed: 4, jump: 11, shotPower: 12 },
-            { id: 'neon', name: 'Neon Flash', cost: 50, color: '#22c55e', perk: '+15% Ground Speed', speed: 4.8, jump: 11, shotPower: 12 },
-            { id: 'gravity', name: 'Moon Jumper', cost: 50, color: '#a855f7', perk: 'Increased Jump Height', speed: 4, jump: 13.5, shotPower: 12 },
-            { id: 'sniper', name: 'Rim Sniper', cost: 50, color: '#3b82f6', perk: 'Higher Shot Arc Accuracy', speed: 4, jump: 11, shotPower: 14.5 },
-            { id: 'cyber', name: 'Cyber Hoop', cost: 100, color: '#ec4899', perk: 'Speed & Power Buff combo', speed: 4.5, jump: 11, shotPower: 13.5 },
-            { id: 'magma', name: 'Magma Dunker', cost: 100, color: '#ef4444', perk: 'Friction Boost on Ground', speed: 4.3, jump: 12, shotPower: 12 },
-            { id: 'gold', name: 'Solid Gold', cost: 150, color: '#eab308', perk: 'Generates 5 extra balls/win', speed: 4.2, jump: 11.5, shotPower: 12.5 },
-            { id: 'shadow', name: 'Shadow Ghost', cost: 150, color: '#475569', perk: 'Reduced Bot Intercept Chance', speed: 4.6, jump: 11, shotPower: 12 },
-            { id: 'glitch', name: 'Matrix Glitch', cost: 200, color: '#06b6d4', perk: 'Random Burst Jumps', speed: 4.4, jump: 12.5, shotPower: 12.5 },
-            { id: 'frost', name: 'Ice Cold', cost: 200, color: '#93c5fd', perk: 'Freezes court slide vector', speed: 4.1, jump: 11, shotPower: 13 },
-            { id: 'bionic', name: 'Bionic Unit', cost: 250, color: '#14b8a6', perk: 'Enhanced Physics Output', speed: 4.5, jump: 12, shotPower: 13 },
-            { id: 'vortex', name: 'Vortex Black', cost: 250, color: '#6366f1', perk: 'Slight Ball Magnetization', speed: 4.3, jump: 12.2, shotPower: 12.8 },
-            { id: 'phoenix', name: 'Firebird', cost: 300, color: '#f43f5e', perk: 'Max Velocity Breakthrough', speed: 5.0, jump: 12.5, shotPower: 12 },
-            { id: 'diamond', name: 'Diamond VIP', cost: 400, color: '#ffffff', perk: 'Double Match Payouts (100 BB)', speed: 4.7, jump: 12.5, shotPower: 13.5 },
-            { id: 'alien', name: 'Zorblax Cosmic', cost: 500, color: '#d946ef', perk: 'Ultimate Breaking Physics', speed: 5.2, jump: 14.5, shotPower: 15 }
-        ];
-
-        // --- ENGINE STATE VARIABLES ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        let gameState = 'menu'; // menu, playing, paused, settings_pause
-        let matchConfig = { type: '1v1', difficulty: 'random' };
-        let gameLoopId = null;
-        
-        // Key checking dictionary
-        let keysPressed = {};
-
-        // Entity Framework Pools
-        let players = [];
-        let basketball = { x: 400, y: 200, vx: 0, vy: 0, radius: 12, holder: null, lastHolder: null };
-        let court = { floorY: 530, netX: 720, netY: 320, netWidth: 40, rimHeight: 8 };
-
-        // Realtime Scoring Tracking
-        let scores = { home: 0, away: 0 };
-        let matchTimer = 0;
-
-        // --- ROUTING & UI SCENARIOS ---
-        function switchScreen(screenId) {
-            // Hide all overlays
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('game-hud').classList.add('hidden');
-
-            // Reset current mapping state when leaving settings
-            if (screenId !== 'settings-menu') {
-                activeBindingKey = null;
-                document.querySelectorAll('.keybind-btn').forEach(b => b.classList.remove('waiting'));
-            }
-
-            // Route execution hooks
-            if (screenId === 'main-menu') {
-                gameState = 'menu';
-                renderLeaderboard();
-                updateCurrencyElements();
-                document.getElementById('main-menu').classList.remove('hidden');
-            } else if (screenId === 'play-settings') {
-                updateCurrencyElements();
-                document.getElementById('play-settings').classList.remove('hidden');
-            } else if (screenId === 'skins-menu') {
-                updateCurrencyElements();
-                renderSkinsGrid();
-                document.getElementById('skins-menu').classList.remove('hidden');
-            } else if (screenId === 'settings-menu') {
-                updateKeybindLabels();
-                document.getElementById('settings-menu').classList.remove('hidden');
-            }
-        }
-
-        function updateCurrencyElements() {
-            document.getElementById('menu-balls').innerText = playerData.balls;
-            document.getElementById('play-balls').innerText = playerData.balls;
-            document.getElementById('shop-balls').innerText = playerData.balls;
-        }
-
-        function renderLeaderboard() {
-            const list = document.getElementById('leaderboard-ui-list');
-            list.innerHTML = '';
-            // Sort high to low
-            playerData.leaderboard.sort((a, b) => b.score - a.score);
-            playerData.leaderboard.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'leaderboard-item' + (item.isPlayer ? ' player-row' : '');
-                li.innerHTML = `<span>${item.name}</span><span>🏀 ${item.score}</span>`;
-                list.appendChild(li);
-            });
-        }
-
-        // --- KEY INTERCEPTOR ENGINE ---
-        // Separate event checking prevents UI capture issues
-        window.addEventListener('keydown', function(e) {
-            // CRITICAL FIX: If we are configuring keybinds, intercept the input immediately and halt normal execution!
-            if (activeBindingKey) {
-                keybinds[activeBindingKey] = e.code;
-                activeBindingKey = null;
-                updateKeybindLabels();
-                e.preventDefault();
-                return;
-            }
-
-            keysPressed[e.code] = true;
-
-            // Global Pause Button hook (Escape or P)
-            if ((e.code === 'Escape' || e.code === 'KeyP') && gameState === 'playing') {
-                pauseGame();
-                e.preventDefault();
-            }
-        });
-
-        window.addEventListener('keyup', function(e) {
-            keysPressed[e.code] = false;
-        });
-
-        function startKeybind(action) {
-            // Cancel any pending changes elsewhere
-            document.querySelectorAll('.keybind-btn').forEach(b => b.classList.remove('waiting'));
-            
-            activeBindingKey = action;
-            const targetBtn = document.getElementById(`bind-${action}`);
-            if (targetBtn) {
-                targetBtn.classList.add('waiting');
-                targetBtn.innerText = "[Press Key...]";
-            }
-        }
-
-        function updateKeybindLabels() {
-            document.querySelectorAll('.keybind-btn').forEach(btn => btn.classList.remove('waiting'));
-            document.getElementById('bind-left').innerText = keybinds.left.replace('Key', '');
-            document.getElementById('bind-right').innerText = keybinds.right.replace('Key', '');
-            document.getElementById('bind-jump').innerText = keybinds.jump.replace('Key', '');
-            document.getElementById('bind-dribble').innerText = keybinds.dribble.replace('Key', '');
-            document.getElementById('bind-shoot').innerText = keybinds.shoot.replace('Space', 'Spacebar');
-        }
-
-        // --- SHOP LAYOUT GENERATION ---
-        function renderSkinsGrid() {
-            const container = document.getElementById('skins-grid-container');
-            container.innerHTML = '';
-
-            SKINS_DATABASE.forEach(skin => {
-                const isUnlocked = playerData.unlockedSkins.includes(skin.id);
-                const isEquipped = playerData.currentSkin === skin.id;
-
-                const card = document.createElement('div');
-                card.className = `skin-card ${isEquipped ? 'equipped' : ''}`;
-
-                let innerBtnHtml = '';
-                if (isEquipped) {
-                    innerBtnHtml = `<button class="btn skin-btn" style="background:#22c55e;" disabled>Equipped</button>`;
-                } else if (isUnlocked) {
-                    innerBtnHtml = `<button class="btn skin-btn btn-secondary" onclick="equipSkin('${skin.id}')">Equip</button>`;
-                } else {
-                    innerBtnHtml = `<button class="btn skin-btn" onclick="buySkin('${skin.id}', ${skin.cost})">Buy: 🏀 ${skin.cost}</button>`;
-                }
-
-                card.innerHTML = `
-                    <div class="skin-preview" style="background-color: ${skin.color}; border: 3px solid #fff;"></div>
-                    <div class="skin-name">${skin.name}</div>
-                    <div class="skin-ability">${skin.perk}</div>
-                    ${innerBtnHtml}
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function equipSkin(skinId) {
-            playerData.currentSkin = skinId;
-            renderSkinsGrid();
-            updateCurrencyElements();
-        }
-
-        function buySkin(skinId, cost) {
-            if (playerData.balls >= cost) {
-                playerData.balls -= cost;
-                playerData.unlockedSkins.push(skinId);
-                equipSkin(skinId);
-            } else {
-                alert("You don't have enough Basketballs!
+</body>
+</html>
