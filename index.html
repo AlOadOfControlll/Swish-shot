@@ -3,756 +3,750 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swish Shot - 2D Basketball</title>
+    <title>Swish Shot</title>
     <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --primary-orange: #f97316;
+            --primary-hover: #ea580c;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
         * {
             box-sizing: border-box;
-            user-select: none;
-        }
-        body {
             margin: 0;
             padding: 0;
-            background-color: #111;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
         }
-        #gameContainer {
+
+        #game-container {
             position: relative;
             width: 800px;
-            height: 500px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-radius: 8px;
+            height: 600px;
+            background: radial-gradient(circle, #2563eb 0%, #1d4ed8 100%);
+            border: 4px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             overflow: hidden;
         }
+
         canvas {
-            background-color: #222;
             display: block;
+            width: 100%;
+            height: 100%;
         }
-        /* UI Overlay Systems */
-        .screen-overlay {
+
+        /* Screen overlays */
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: none;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+            z-index: 10;
+            padding: 30px;
+        }
+
+        .screen.hidden {
+            display: none !important;
+        }
+
+        /* Main Menu Specifics */
+        #main-menu {
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+        }
+
+        .header-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .game-title {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--primary-orange);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 3px 3px 0px #fff, 6px 6px 0px rgba(0,0,0,0.4);
+            animation: bounce 2s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        .currency-display {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .currency-icon {
+            color: var(--primary-orange);
+            font-size: 1.3rem;
+        }
+
+        .menu-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+            flex-grow: 1;
+            margin-top: 20px;
+            min-height: 0; /* allows grid items to shrink */
+        }
+
+        .menu-nav {
+            display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            background-color: var(--primary-orange);
             color: white;
-            padding: 20px;
-        }
-        /* Active Screen Trigger */
-        .active {
-            display: flex;
-        }
-        /* Theme Styling for Main Menu */
-        #mainMenu {
-            background: linear-gradient(135deg, #ff6b2b 0%, #a83200 100%);
-        }
-        #mainMenu h1 {
-            font-size: 4rem;
-            margin: 0 0 10px 0;
-            text-transform: uppercase;
-            text-shadow: 3px 3px 0px #000;
-            letter-spacing: 2px;
-            font-style: italic;
-        }
-        .subtitle {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            background: rgba(0,0,0,0.3);
-            padding: 5px 15px;
-            border-radius: 20px;
-        }
-        /* Submenus Style */
-        .submenu {
-            background: rgba(20, 20, 20, 0.95);
-            border: 3px solid #ff6b2b;
-            border-radius: 12px;
-            width: 90%;
-            height: 90%;
-        }
-        .submenu-header {
-            font-size: 2rem;
-            color: #ff6b2b;
-            margin: 15px 0;
-            text-transform: uppercase;
-            font-weight: bold;
-            text-align: center;
-        }
-        /* Button Styles */
-        .menu-btn {
-            background: #fff;
-            color: #000;
             border: none;
-            padding: 12px 35px;
-            margin: 8px;
+            padding: 14px 28px;
             font-size: 1.1rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-radius: 25px;
+            font-weight: 700;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 0px #ccc;
-            min-width: 180px;
-            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
         }
-        .menu-btn:hover {
+
+        .btn:hover {
+            background-color: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 6px 0px #ff6b2b;
-            background: #ff884d;
-            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
         }
-        .menu-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0px #ff6b2b;
+
+        .btn:active {
+            transform: translateY(0);
         }
-        .back-btn {
-            background: #555;
-            color: white;
-            box-shadow: 0 4px 0px #333;
-            margin-top: auto;
+
+        .btn-secondary {
+            background-color: #475569;
+        }
+        .btn-secondary:hover {
+            background-color: #334155;
+        }
+
+        /* Leaderboard block on Menu */
+        .leaderboard-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-bottom: 2px solid var(--primary-orange);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .leaderboard-item.player-row {
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid var(--primary-orange);
+            font-weight: bold;
+        }
+
+        /* Layout Structure for Inside Submenus */
+        .submenu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .submenu-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Settings Grid Layout */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .settings-section {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
         }
-        .back-btn:hover {
-            background: #777;
-            box-shadow: 0 6px 0px #444;
+
+        select, input[type="text"] {
+            background-color: #334155;
+            color: white;
+            border: 1px solid #475569;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
         }
-        /* Content Layouts */
-        .grid-container {
+
+        .keybind-btn {
+            background: #334155;
+            color: #fff;
+            border: 1px solid #475569;
+            padding: 8px 16px;
+            border-radius: 6px;
+            min-width: 100px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .keybind-btn.waiting {
+            background: var(--primary-orange);
+            border-color: #fff;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* Skins Tab/Grid */
+        .skins-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
-            padding: 0 20px;
-            width: 100%;
-            overflow-y: auto;
-            max-height: 70%;
         }
-        .flex-row {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            padding: 10px 40px;
-        }
-        .settings-column {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 8px;
-            width: 45%;
-        }
-        .settings-column h3 {
-            margin-top: 0;
-            color: #ff6b2b;
-            border-bottom: 1px solid #ff6b2b;
-            width: 100%;
-            padding-bottom: 5px;
-        }
-        .setting-item {
-            margin: 10px 0;
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            align-items: center;
-        }
-        .setting-item input[type="text"] {
-            width: 80px;
-            text-align: center;
-            background: #333;
-            color: #fff;
-            border: 1px solid #ff6b2b;
-            border-radius: 4px;
-            padding: 3px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .setting-item select {
-            background: #333;
-            color: #fff;
-            border: 1px solid #ff6b2b;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        /* Skins Custom Cards */
+
         .skin-card {
-            background: #252525;
-            border: 2px solid #444;
-            border-radius: 8px;
-            padding: 10px;
+            background: var(--panel-bg);
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 15px;
             text-align: center;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
             position: relative;
+            transition: transform 0.2s;
         }
-        .skin-card.equipped { border-color: #00ffcc; }
-        .skin-card.owned { border-color: #ff6b2b; }
-        .skin-icon {
-            width: 40px;
-            height: 40px;
+
+        .skin-card:hover {
+            transform: scale(1.02);
+        }
+
+        .skin-card.equipped {
+            border-color: #22c55e;
+            background: linear-gradient(180deg, var(--panel-bg) 0%, rgba(34, 197, 94, 0.1) 100%);
+        }
+
+        .skin-preview {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            margin: 5px 0;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .skin-name { font-weight: bold; font-size: 0.95rem; }
-        .skin-ability { font-size: 0.75rem; color: #aaa; margin: 4px 0; min-height: 24px;}
-        .skin-cost { font-size: 0.85rem; color: #ffbc00; font-weight: bold; display: flex; align-items: center; gap: 3px;}
-        .skin-btn {
-            background: #ff6b2b;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
+
+        .skin-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .skin-ability {
             font-size: 0.8rem;
-            cursor: pointer;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .skin-btn {
             width: 100%;
-            font-weight: bold;
+            padding: 8px;
+            font-size: 0.9rem;
+            border-radius: 6px;
         }
-        .skin-btn.owned-btn { background: #444; }
-        .skin-btn.equipped-btn { background: #00ffcc; color: black; }
-        
-        /* Stats Tracker top bar */
-        .currency-display {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            background: rgba(0,0,0,0.6);
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-weight: bold;
-            color: #ffbc00;
-            display: flex;
+
+        /* Pause Screen styling Overlay */
+        #pause-menu {
+            background: rgba(15, 23, 42, 0.85);
+            justify-content: center;
             align-items: center;
-            gap: 5px;
-            z-index: 10;
+            gap: 20px;
         }
 
-        /* Leaderboard styling */
-        .leaderboard-list {
-            width: 80%;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            padding: 10px;
-            max-height: 65%;
-            overflow-y: auto;
-        }
-        .leaderboard-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .leaderboard-row.player-row {
-            background: rgba(255, 107, 43, 0.2);
-            color: #ff6b2b;
+        .pause-title {
+            font-size: 3rem;
             font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
         }
 
-        /* HUD & Pause Elements */
-        #gameHUD {
+        .pause-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+        }
+
+        /* HUD elements during actual runtime */
+        #game-hud {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            padding: 10px 20px;
-            display: none;
+            padding: 15px 20px;
+            display: flex;
             justify-content: space-between;
             align-items: center;
-            color: white;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px black;
             pointer-events: none;
+            z-index: 5;
         }
-        #pauseBtn {
+
+        .hud-score {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .hud-pause-btn {
             pointer-events: auto;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             color: white;
-            border: 2px solid white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
-        #pauseMenu {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(4px);
+        .hud-pause-btn:hover {
+            background: var(--primary-orange);
         }
     </style>
 </head>
 <body>
 
-    <div id="gameContainer">
-        <!-- Currency Widget (Shared across menus) -->
-        <div class="currency-display">🏀 <span id="ballCount">150</span></div>
-
-        <!-- Canvas for Game Graphics -->
-        <canvas id="gameCanvas" width="800" height="500"></canvas>
-
-        <!-- Live Game HUD -->
-        <div id="gameHUD">
-            <div>MODE: <span id="hudMode">1v1</span> | BOTS: <span id="hudBotDiff">Normal</span></div>
-            <div>SCORE: <span id="hudScore">0 - 0</span></div>
-            <button id="pauseBtn" onclick="pauseGame()">║</button>
+    <div id="game-container">
+        
+        <!-- HUD layer -->
+        <div id="game-hud" class="hidden">
+            <div class="hud-score" id="score-board">HOME 0 - 0 AWAY</div>
+            <button class="hud-pause-btn" onclick="pauseGame()">PAUSE</button>
         </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
 
         <!-- MAIN MENU -->
-        <div id="mainMenu" class="screen-overlay active">
-            <h1>Swish Shot</h1>
-            <div class="subtitle">2D GitHub Basketball Arcade</div>
-            <button class="menu-btn" onclick="startGame()">Play Match</button>
-            <button class="menu-btn" onclick="showScreen('settingsMenu')">Settings</button>
-            <button class="menu-btn" onclick="showScreen('skinsMenu')">Skins & Abilities</button>
-            <button class="menu-btn" onclick="showScreen('leaderboardMenu')">Leaderboard</button>
+        <div id="main-menu" class="screen">
+            <div class="header-container">
+                <div class="game-title">Swish Shot</div>
+                <div class="currency-display">
+                    <span class="currency-icon">🏀</span>
+                    <span id="menu-balls">0</span> Basketballs
+                </div>
+            </div>
+
+            <div class="menu-layout">
+                <div class="menu-nav">
+                    <button class="btn" onclick="switchScreen('play-settings')">Play Match</button>
+                    <button class="btn btn-secondary" onclick="switchScreen('skins-menu')">Skins & Abilities</button>
+                    <button class="btn btn-secondary" onclick="switchScreen('settings-menu')">Settings / Controls</button>
+                </div>
+                <div class="leaderboard-panel">
+                    <div class="panel-title">Global Leaderboard</div>
+                    <ul class="leaderboard-list" id="leaderboard-ui-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </div>
         </div>
 
-        <!-- SETTINGS MENU -->
-        <div id="settingsMenu" class="screen-overlay">
-            <div class="submenu flex-row" style="flex-direction: column; align-items: center; justify-content: flex-start;">
-                <div class="submenu-header">Game Settings</div>
-                
-                <div class="flex-row" style="padding: 0; width: 100%; height: 65%;">
-                    <!-- Match Configuration -->
-                    <div class="settings-column">
-                        <h3>Match Setup</h3>
-                        <div class="setting-item">
-                            <label>Match Mode:</label>
-                            <select id="matchMode">
-                                <option value="1v1">1 vs 1</option>
-                                <option value="2v2">2 vs 2</option>
-                                <option value="3v3">3 vs 3</option>
-                            </select>
+        <!-- MATCH / MODE SETTINGS -->
+        <div id="play-settings" class="screen hidden">
+            <div class="submenu-header">
+                <h2>Match Configuration</h2>
+                <div class="currency-display">🏀 <span id="play-balls">0</span></div>
+            </div>
+            <div class="submenu-body" style="display:flex; flex-direction:column; gap:25px;">
+                <div class="setting-row" style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px;">
+                    <label style="font-weight:bold; font-size:1.2rem;">Match Type</label>
+                    <select id="match-type-select" style="font-size:1.1rem; padding:10px 20px;">
+                        <option value="1v1">1 vs 1 (Solo Showdown)</option>
+                        <option value="2v2">2 vs 2 (Team Play)</option>
+                        <option value="3v3">3 vs 3 (Full Court Chaos)</option>
+                    </select>
+                </div>
+                <div class="setting-row" style="background:rgba(0,0,0,0.2); padding:15px; border-radius:8px;">
+                    <label style="font-weight:bold; font-size:1.2rem;">Bot Difficulty</label>
+                    <select id="bot-diff-select" style="font-size:1.1rem; padding:10px 20px;">
+                        <option value="random">Random Mix (Easy/Normal/Hard)</option>
+                        <option value="easy">Easy Bots Only</option>
+                        <option value="normal">Normal Bots Only</option>
+                        <option value="hard">Hard Bots Only</option>
+                    </select>
+                </div>
+                <div style="margin-top:auto; display:flex; gap:15px;">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="switchScreen('main-menu')">Back</button>
+                    <button class="btn" style="flex:2; background-color:#22c55e;" onclick="startMatch()">Tip Off Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS & CONTROLS -->
+        <div id="settings-menu" class="screen hidden">
+            <div class="submenu-header">
+                <h2>Settings & Keybinds</h2>
+                <button class="btn btn-secondary" style="padding:6px 16px;" onclick="switchScreen('main-menu')">Save & Back</button>
+            </div>
+            <div class="submenu-body">
+                <div class="settings-grid">
+                    <div class="settings-section">
+                        <h3 style="margin-bottom:15px; color:var(--primary-orange);">Custom Controls</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Click on a button below, then press your desired physical keyboard key to re-bind it.</p>
+                        
+                        <div class="setting-row">
+                            <span>Move Left</span>
+                            <div class="keybind-btn" id="bind-left" onclick="startKeybind('left')">A</div>
                         </div>
-                        <div class="setting-item">
-                            <label>Bot AI Difficulty:</label>
-                            <select id="botDifficulty">
-                                <option value="Random">Random Bot Mix</option>
-                                <option value="Easy">Easy Only</option>
-                                <option value="Normal">Normal Only</option>
-                                <option value="Hard">Hard Only</option>
-                            </select>
+                        <div class="setting-row">
+                            <span>Move Right</span>
+                            <div class="keybind-btn" id="bind-right" onclick="startKeybind('right')">D</div>
                         </div>
-                        <div class="setting-item" style="font-size: 0.8rem; color: #aaa; text-align: center; width:100%">
-                            Winning matches rewards 50 🏀!
+                        <div class="setting-row">
+                            <span>Jump</span>
+                            <div class="keybind-btn" id="bind-jump" onclick="startKeybind('jump')">W</div>
+                        </div>
+                        <div class="setting-row">
+                            <span>Dribble / Steal</span>
+                            <div class="keybind-btn" id="bind-dribble" onclick="startKeybind('dribble')">F</div>
+                        </div>
+                        <div class="setting-row">
+                            <span>Shoot / Block</span>
+                            <div class="keybind-btn" id="bind-shoot" onclick="startKeybind('shoot')">Space</div>
                         </div>
                     </div>
 
-                    <!-- Input Keybinds -->
-                    <div class="settings-column">
-                        <h3>Key Bindings</h3>
-                        <div class="setting-item">
-                            <label>Move Left:</label>
-                            <input type="text" id="keyLeft" value="A" readonly onclick="bindKey('keyLeft')">
+                    <div class="settings-section">
+                        <h3 style="margin-bottom:15px; color:var(--primary-orange);">Game Options</h3>
+                        <div class="setting-row">
+                            <span>Music & Sound</span>
+                            <select id="audio-toggle">
+                                <option value="on">Enabled</option>
+                                <option value="off">Muted</option>
+                            </select>
                         </div>
-                        <div class="setting-item">
-                            <label>Move Right:</label>
-                            <input type="text" id="keyRight" value="D" readonly onclick="bindKey('keyRight')">
+                        <div class="setting-row">
+                            <span>Visual Particles</span>
+                            <select id="particles-toggle">
+                                <option value="on">On (High Performance)</option>
+                                <option value="off">Off (Smooth)</option>
+                            </select>
                         </div>
-                        <div class="setting-item">
-                            <label>Dribble Ball:</label>
-                            <input type="text" id="keyDribble" value="S" readonly onclick="bindKey('keyDribble')">
-                        </div>
-                        <div class="setting-item">
-                            <label>Shoot Hoop:</label>
-                            <input type="text" id="keyShoot" value="W" readonly onclick="bindKey('keyShoot')">
+                        <div style="margin-top:40px; padding:15px; background:rgba(255,255,255,0.05); border-radius:8px; border:1px dashed rgba(255,255,255,0.2);">
+                            <h4 style="font-size:0.9rem; margin-bottom:5px;">💡 System Check Pass:</h4>
+                            <p style="font-size:0.8rem; color:var(--text-muted);">Active engine isolation layer is enabled. Input handlers will safely release focus when customizing configuration properties.</p>
                         </div>
                     </div>
                 </div>
-
-                <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">Save & Back</button>
             </div>
         </div>
 
-        <!-- SKINS MENU -->
-        <div id="skinsMenu" class="screen-overlay">
-            <div class="submenu" style="display: flex; flex-direction: column; align-items: center;">
-                <div class="submenu-header">Skins Shop (15 Custom Abilities)</div>
-                <div class="grid-container" id="skinsGrid">
-                    <!-- Loaded dynamically via JavaScript -->
+        <!-- SKINS SHOP -->
+        <div id="skins-menu" class="screen hidden">
+            <div class="submenu-header">
+                <h2>Locker Room & Abilities Shop</h2>
+                <div class="currency-display">🏀 <span id="shop-balls">0</span></div>
+            </div>
+            <div class="submenu-body">
+                <div class="skins-grid" id="skins-grid-container">
+                    <!-- Dynamic Generation -->
                 </div>
-                <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">Back to Menu</button>
-            </div>
-        </div>
-
-        <!-- LEADERBOARD MENU -->
-        <div id="leaderboardMenu" class="screen-overlay">
-            <div class="submenu" style="display: flex; flex-direction: column; align-items: center;">
-                <div class="submenu-header">Global Bot Standings</div>
-                <div class="leaderboard-list" id="leaderboardGrid">
-                    <!-- Loaded dynamically via JavaScript -->
+                <div style="margin-top:25px;">
+                    <button class="btn btn-secondary" style="width:100%;" onclick="switchScreen('main-menu')">Back to Gym</button>
                 </div>
-                <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">Back to Menu</button>
             </div>
         </div>
 
-        <!-- PAUSE MENU OVERLAY -->
-        <div id="pauseMenu" class="screen-overlay">
-            <h1 style="color: #ff6b2b; font-size: 3rem; margin-bottom: 20px; text-transform: uppercase;">Game Paused</h1>
-            <button class="menu-btn" onclick="resumeGame()">Resume Match</button>
-            <button class="menu-btn" onclick="showScreen('settingsMenu')">Change Settings</button>
-            <button class="menu-btn" onclick="exitToMenu()">Exit to Main Menu</button>
+        <!-- PAUSE INTERCEPT SCREEN -->
+        <div id="pause-menu" class="screen hidden">
+            <div class="pause-title">GAME PAUSED</div>
+            <div class="pause-box">
+                <button class="btn" onclick="resumeGame()">Resume</button>
+                <button class="btn btn-secondary" onclick="openSettingsFromPause()">Settings</button>
+                <button class="btn btn-secondary" style="background-color:#ef4444;" onclick="quitToMenu()">Exit to Menu</button>
+            </div>
         </div>
 
     </div>
 
     <script>
-        // Core Engine States
+        // --- PERSISTENT DATA LAYER & SAVESTATES ---
+        let playerData = {
+            balls: 150, // Initial balance to test purchasing
+            currentSkin: 'classic',
+            unlockedSkins: ['classic'],
+            leaderboard: [
+                {name: "LeBot James (Hard)", score: 2450},
+                {name: "Stephen Blurry (Hard)", score: 2100},
+                {name: "Kevin DeBot (Normal)", score: 1350},
+                {name: "You (Player)", score: 150, isPlayer: true},
+                {name: "ShaqtinBot (Easy)", score: 90},
+                {name: "AirBuddy (Easy)", score: 40}
+            ]
+        };
+
+        // --- KEYBINDS SYSTEM ---
+        let keybinds = {
+            left: 'KeyA',
+            right: 'KeyD',
+            jump: 'KeyW',
+            dribble: 'KeyF',
+            shoot: 'Space'
+        };
+
+        let activeBindingKey = null; // Holds index if currently mapping a bind
+
+        // --- 15 DEFINED SKINS WITH CUSTOM ABILITIES ---
+        const SKINS_DATABASE = [
+            { id: 'classic', name: 'Classic Baller', cost: 0, color: '#f97316', perk: 'No special buffs', speed: 4, jump: 11, shotPower: 12 },
+            { id: 'neon', name: 'Neon Flash', cost: 50, color: '#22c55e', perk: '+15% Ground Speed', speed: 4.8, jump: 11, shotPower: 12 },
+            { id: 'gravity', name: 'Moon Jumper', cost: 50, color: '#a855f7', perk: 'Increased Jump Height', speed: 4, jump: 13.5, shotPower: 12 },
+            { id: 'sniper', name: 'Rim Sniper', cost: 50, color: '#3b82f6', perk: 'Higher Shot Arc Accuracy', speed: 4, jump: 11, shotPower: 14.5 },
+            { id: 'cyber', name: 'Cyber Hoop', cost: 100, color: '#ec4899', perk: 'Speed & Power Buff combo', speed: 4.5, jump: 11, shotPower: 13.5 },
+            { id: 'magma', name: 'Magma Dunker', cost: 100, color: '#ef4444', perk: 'Friction Boost on Ground', speed: 4.3, jump: 12, shotPower: 12 },
+            { id: 'gold', name: 'Solid Gold', cost: 150, color: '#eab308', perk: 'Generates 5 extra balls/win', speed: 4.2, jump: 11.5, shotPower: 12.5 },
+            { id: 'shadow', name: 'Shadow Ghost', cost: 150, color: '#475569', perk: 'Reduced Bot Intercept Chance', speed: 4.6, jump: 11, shotPower: 12 },
+            { id: 'glitch', name: 'Matrix Glitch', cost: 200, color: '#06b6d4', perk: 'Random Burst Jumps', speed: 4.4, jump: 12.5, shotPower: 12.5 },
+            { id: 'frost', name: 'Ice Cold', cost: 200, color: '#93c5fd', perk: 'Freezes court slide vector', speed: 4.1, jump: 11, shotPower: 13 },
+            { id: 'bionic', name: 'Bionic Unit', cost: 250, color: '#14b8a6', perk: 'Enhanced Physics Output', speed: 4.5, jump: 12, shotPower: 13 },
+            { id: 'vortex', name: 'Vortex Black', cost: 250, color: '#6366f1', perk: 'Slight Ball Magnetization', speed: 4.3, jump: 12.2, shotPower: 12.8 },
+            { id: 'phoenix', name: 'Firebird', cost: 300, color: '#f43f5e', perk: 'Max Velocity Breakthrough', speed: 5.0, jump: 12.5, shotPower: 12 },
+            { id: 'diamond', name: 'Diamond VIP', cost: 400, color: '#ffffff', perk: 'Double Match Payouts (100 BB)', speed: 4.7, jump: 12.5, shotPower: 13.5 },
+            { id: 'alien', name: 'Zorblax Cosmic', cost: 500, color: '#d946ef', perk: 'Ultimate Breaking Physics', speed: 5.2, jump: 14.5, shotPower: 15 }
+        ];
+
+        // --- ENGINE STATE VARIABLES ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        let gameState = 'menu'; // 'menu', 'playing', 'paused'
-        let previousState = 'menu'; // Tracks screen jumps for the setting window
-        let basketballs = 150; // Starting money
+        let gameState = 'menu'; // menu, playing, paused, settings_pause
+        let matchConfig = { type: '1v1', difficulty: 'random' };
+        let gameLoopId = null;
         
-        // Dynamic Keybind config status
-        let bindingTarget = null;
+        // Key checking dictionary
+        let keysPressed = {};
 
-        // Custom Keybind storage object
-        let keybinds = {
-            keyLeft: 'A',
-            keyRight: 'D',
-            keyDribble: 'S',
-            keyShoot: 'W'
-        };
+        // Entity Framework Pools
+        let players = [];
+        let basketball = { x: 400, y: 200, vx: 0, vy: 0, radius: 12, holder: null, lastHolder: null };
+        let court = { floorY: 530, netX: 720, netY: 320, netWidth: 40, rimHeight: 8 };
 
-        // Active match options
-        let activeMatch = {
-            mode: '1v1',
-            difficulty: 'Normal',
-            playerScore: 0,
-            botScore: 0
-        };
+        // Realtime Scoring Tracking
+        let scores = { home: 0, away: 0 };
+        let matchTimer = 0;
 
-        // Complete database of 15 unique custom skins with colors and stats
-        const skinsDatabase = [
-            { id: 1, name: "Default Rookie", ability: "Standard handling stats", cost: 0, color: "#ff6b2b", purchased: true },
-            { id: 2, name: "Air Phantom", ability: "+20% Higher Jump Reach", cost: 50, color: "#3a86ff", purchased: false },
-            { id: 3, name: "Sonic Dribbler", ability: "+15% Sprint Speed Matrix", cost: 50, color: "#ff006e", purchased: false },
-            { id: 4, name: "Laser Targeting", ability: "Shows accurate ball flight arc", cost: 100, color: "#8338ec", purchased: false },
-            { id: 5, name: "Cyber Dunker", ability: "Slam dunks from 2x further out", cost: 100, color: "#00f5d4", purchased: false },
-            { id: 6, name: "Ankle Breaker", ability: "Stuns close defensive AI bots", cost: 150, color: "#fee440", purchased: false },
-            { id: 7, name: "Magnetic Hands", ability: "Steals ball smoothly from side", cost: 150, color: "#00bbf9", purchased: false },
-            { id: 8, name: "Buzzer Master", ability: "Shots in final 10s count triple", cost: 200, color: "#9b5de5", purchased: false },
-            { id: 9, name: "Iron Defense", ability: "Blocks cannot cause player falls", cost: 200, color: "#e63946", purchased: false },
-            { id: 10, name: "Vortex Rim", ability: "Slightly pulls ball into basket hoop", cost: 250, color: "#f15bb5", purchased: false },
-            { id: 11, name: "Ghost Step", ability: "Dash clean straight through defenders", cost: 250, color: "#00f5d4", purchased: false },
-            { id: 12, name: "Meteor Striker", ability: "Powers ball rapidly down court line", cost: 300, color: "#ffb703", purchased: false },
-            { id: 13, name: "Matrix Slow", ability: "Slow-motion physics during shot arc", cost: 350, color: "#70e000", purchased: false },
-            { id: 14, name: "Golden King", ability: "Earns double currency rewards permanently", cost: 400, color: "#ffd700", purchased: false },
-            { id: 15, name: "GitHub Octopus", ability: "Infinite reach control & legendary spin", cost: 500, color: "#ffffff", purchased: false }
-        ];
-        let equippedSkinId = 1;
+        // --- ROUTING & UI SCENARIOS ---
+        function switchScreen(screenId) {
+            // Hide all overlays
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('game-hud').classList.add('hidden');
 
-        // Mock Database of Global Bot and Player Leaderboard
-        let leaderboardData = [
-            { name: "AlphaBot [Hard]", wins: 452 },
-            { name: "CyberHooper [Hard]", wins: 389 },
-            { name: "Matrix_AI [Normal]", wins: 294 },
-            { name: "You (Player)", wins: 120, isPlayer: true },
-            { name: "PixelDunker [Normal]", wins: 98 },
-            { name: "RookieBot [Easy]", wins: 23 }
-        ];
-
-        // Screen routing architecture
-        function showScreen(screenId) {
-            // Keep track of where we came from if we went into settings
-            if (screenId === 'settingsMenu') {
-                if (gameState !== 'paused') previousState = 'menu';
+            // Reset current mapping state when leaving settings
+            if (screenId !== 'settings-menu') {
+                activeBindingKey = null;
+                document.querySelectorAll('.keybind-btn').forEach(b => b.classList.remove('waiting'));
             }
 
-            // Hide all active menus safely
-            document.getElementById('mainMenu').classList.remove('active');
-            document.getElementById('settingsMenu').classList.remove('active');
-            document.getElementById('skinsMenu').classList.remove('active');
-            document.getElementById('leaderboardMenu').classList.remove('active');
-            document.getElementById('pauseMenu').classList.remove('active');
-            document.getElementById('gameHUD').style.display = 'none';
-
-            // Special router cases
-            if (screenId === 'mainMenu') {
+            // Route execution hooks
+            if (screenId === 'main-menu') {
                 gameState = 'menu';
-                document.getElementById('mainMenu').classList.add('active');
-            } else if (screenId === 'paused') {
-                gameState = 'paused';
-                document.getElementById('pauseMenu').classList.add('active');
-            } else if (screenId === 'playing') {
-                gameState = 'playing';
-                document.getElementById('gameHUD').style.display = 'flex';
-            } else {
-                // Regular submenus
-                document.getElementById(screenId).classList.add('active');
+                renderLeaderboard();
+                updateCurrencyElements();
+                document.getElementById('main-menu').classList.remove('hidden');
+            } else if (screenId === 'play-settings') {
+                updateCurrencyElements();
+                document.getElementById('play-settings').classList.remove('hidden');
+            } else if (screenId === 'skins-menu') {
+                updateCurrencyElements();
+                renderSkinsGrid();
+                document.getElementById('skins-menu').classList.remove('hidden');
+            } else if (screenId === 'settings-menu') {
+                updateKeybindLabels();
+                document.getElementById('settings-menu').classList.remove('hidden');
             }
         }
 
-        // Live Application Initialization 
-        function init() {
-            updateCurrencyUI();
-            buildSkinsShop();
-            buildLeaderboard();
-            
-            // Listen for keypress changes for dynamic settings menu binding
-            window.addEventListener('keydown', handleGlobalKeypress);
-            
-            // Start Canvas animation loop framework
-            requestAnimationFrame(gameLoop);
+        function updateCurrencyElements() {
+            document.getElementById('menu-balls').innerText = playerData.balls;
+            document.getElementById('play-balls').innerText = playerData.balls;
+            document.getElementById('shop-balls').innerText = playerData.balls;
         }
 
-        function updateCurrencyUI() {
-            document.getElementById('ballCount').innerText = basketballs;
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboard-ui-list');
+            list.innerHTML = '';
+            // Sort high to low
+            playerData.leaderboard.sort((a, b) => b.score - a.score);
+            playerData.leaderboard.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item' + (item.isPlayer ? ' player-row' : '');
+                li.innerHTML = `<span>${item.name}</span><span>🏀 ${item.score}</span>`;
+                list.appendChild(li);
+            });
         }
 
-        // Dynamic Skin Builder engine
-        function buildSkinsShop() {
-            const grid = document.getElementById('skinsGrid');
-            grid.innerHTML = '';
+        // --- KEY INTERCEPTOR ENGINE ---
+        // Separate event checking prevents UI capture issues
+        window.addEventListener('keydown', function(e) {
+            // CRITICAL FIX: If we are configuring keybinds, intercept the input immediately and halt normal execution!
+            if (activeBindingKey) {
+                keybinds[activeBindingKey] = e.code;
+                activeBindingKey = null;
+                updateKeybindLabels();
+                e.preventDefault();
+                return;
+            }
 
-            skinsDatabase.forEach(skin => {
+            keysPressed[e.code] = true;
+
+            // Global Pause Button hook (Escape or P)
+            if ((e.code === 'Escape' || e.code === 'KeyP') && gameState === 'playing') {
+                pauseGame();
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', function(e) {
+            keysPressed[e.code] = false;
+        });
+
+        function startKeybind(action) {
+            // Cancel any pending changes elsewhere
+            document.querySelectorAll('.keybind-btn').forEach(b => b.classList.remove('waiting'));
+            
+            activeBindingKey = action;
+            const targetBtn = document.getElementById(`bind-${action}`);
+            if (targetBtn) {
+                targetBtn.classList.add('waiting');
+                targetBtn.innerText = "[Press Key...]";
+            }
+        }
+
+        function updateKeybindLabels() {
+            document.querySelectorAll('.keybind-btn').forEach(btn => btn.classList.remove('waiting'));
+            document.getElementById('bind-left').innerText = keybinds.left.replace('Key', '');
+            document.getElementById('bind-right').innerText = keybinds.right.replace('Key', '');
+            document.getElementById('bind-jump').innerText = keybinds.jump.replace('Key', '');
+            document.getElementById('bind-dribble').innerText = keybinds.dribble.replace('Key', '');
+            document.getElementById('bind-shoot').innerText = keybinds.shoot.replace('Space', 'Spacebar');
+        }
+
+        // --- SHOP LAYOUT GENERATION ---
+        function renderSkinsGrid() {
+            const container = document.getElementById('skins-grid-container');
+            container.innerHTML = '';
+
+            SKINS_DATABASE.forEach(skin => {
+                const isUnlocked = playerData.unlockedSkins.includes(skin.id);
+                const isEquipped = playerData.currentSkin === skin.id;
+
                 const card = document.createElement('div');
-                card.className = `skin-card`;
-                if(skin.id === equippedSkinId) card.classList.add('equipped');
-                else if(skin.purchased) card.classList.add('owned');
+                card.className = `skin-card ${isEquipped ? 'equipped' : ''}`;
 
-                let actionBtnText = `<button class="skin-btn" onclick="interactSkin(${skin.id})">Buy 🏀${skin.cost}</button>`;
-                if (skin.id === equippedSkinId) {
-                    actionBtnText = `<button class="skin-btn equipped-btn">Equipped</button>`;
-                } else if (skin.purchased) {
-                    actionBtnText = `<button class="skin-btn owned-btn" onclick="interactSkin(${skin.id})">Equip</button>`;
+                let innerBtnHtml = '';
+                if (isEquipped) {
+                    innerBtnHtml = `<button class="btn skin-btn" style="background:#22c55e;" disabled>Equipped</button>`;
+                } else if (isUnlocked) {
+                    innerBtnHtml = `<button class="btn skin-btn btn-secondary" onclick="equipSkin('${skin.id}')">Equip</button>`;
+                } else {
+                    innerBtnHtml = `<button class="btn skin-btn" onclick="buySkin('${skin.id}', ${skin.cost})">Buy: 🏀 ${skin.cost}</button>`;
                 }
 
                 card.innerHTML = `
-                    <div class="skin-icon" style="background: ${skin.color}; border: 2px solid #fff;"></div>
+                    <div class="skin-preview" style="background-color: ${skin.color}; border: 3px solid #fff;"></div>
                     <div class="skin-name">${skin.name}</div>
-                    <div class="skin-ability">${skin.ability}</div>
-                    ${actionBtnText}
+                    <div class="skin-ability">${skin.perk}</div>
+                    ${innerBtnHtml}
                 `;
-                grid.appendChild(card);
+                container.appendChild(card);
             });
         }
 
-        function interactSkin(id) {
-            const skin = skinsDatabase.find(s => s.id === id);
-            if (!skin) return;
+        function equipSkin(skinId) {
+            playerData.currentSkin = skinId;
+            renderSkinsGrid();
+            updateCurrencyElements();
+        }
 
-            if (!skin.purchased) {
-                // Attempt to buy
-                if (basketballs >= skin.cost) {
-                    basketballs -= skin.cost;
-                    skin.purchased = true;
-                    equippedSkinId = skin.id;
-                    alert(`Successfully unlocked and equipped: ${skin.name}!`);
-                } else {
-                    alert("Not enough basketballs! Win more matches to earn 50 per victory.");
-                }
+        function buySkin(skinId, cost) {
+            if (playerData.balls >= cost) {
+                playerData.balls -= cost;
+                playerData.unlockedSkins.push(skinId);
+                equipSkin(skinId);
             } else {
-                // Toggle equipped
-                equippedSkinId = skin.id;
-            }
-            updateCurrencyUI();
-            buildSkinsShop();
-        }
-
-        // Dynamic Leaderboard population setup
-        function buildLeaderboard() {
-            const container = document.getElementById('leaderboardGrid');
-            container.innerHTML = '';
-            
-            // Sort standard data values descending
-            leaderboardData.sort((a,b) => b.wins - a.wins);
-
-            leaderboardData.forEach((row, index) => {
-                const item = document.createElement('div');
-                item.className = `leaderboard-row ${row.isPlayer ? 'player-row' : ''}`;
-                item.innerHTML = `
-                    <span>#${index + 1} ${row.name}</span>
-                    <span>${row.wins} Wins</span>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        // Dynamic setting system binding execution hooks
-        function bindKey(targetID) {
-            bindingTarget = targetID;
-            const inputField = document.getElementById(targetID);
-            inputField.value = "PRESS KEY...";
-            inputField.style.borderColor = "#00ffcc";
-        }
-
-        function handleGlobalKeypress(e) {
-            if (bindingTarget) {
-                e.preventDefault();
-                let chosenKey = e.key.toUpperCase();
-                if (chosenKey === " ") chosenKey = "SPACE";
-                
-                keybinds[bindingTarget] = chosenKey;
-                
-                const element = document.getElementById(bindingTarget);
-                element.value = chosenKey;
-                element.style.borderColor = "#ff6b2b";
-                bindingTarget = null;
-            } else if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
-                // Bind quick escape key to handle real-time pauses safely
-                if (gameState === 'playing') {
-                    pauseGame();
-                } else if (gameState === 'paused') {
-                    resumeGame();
-                }
-            }
-        }
-
-        // Gameplay control systems
-        function startGame() {
-            // Pull configuration setup variables right out of user selections form fields
-            activeMatch.mode = document.getElementById('matchMode').value;
-            
-            const diffSelect = document.getElementById('botDifficulty').value;
-            if(diffSelect === 'Random') {
-                const choices = ['Easy', 'Normal', 'Hard'];
-                activeMatch.difficulty = choices[Math.floor(Math.random() * choices.length)] + " (Mixed)";
-            } else {
-                activeMatch.difficulty = diffSelect;
-            }
-
-            // Zero baseline game metrics
-            activeMatch.playerScore = 0;
-            activeMatch.botScore = 0;
-
-            // Push values out live directly onto the user graphic layout system fields
-            document.getElementById('hudMode').innerText = activeMatch.mode;
-            document.getElementById('hudBotDiff').innerText = activeMatch.difficulty;
-            document.getElementById('hudScore').innerText = `${activeMatch.playerScore} - ${activeMatch.botScore}`;
-
-            showScreen('playing');
-        }
-
-        function pauseGame() {
-            previousState = 'paused';
-            showScreen('paused');
-        }
-
-        function resumeGame() {
-            showScreen('playing');
-        }
-
-        function exitToMenu() {
-            if(confirm("Are you sure you want to forfeit this match?")) {
-                showScreen('mainMenu');
-            }
-        }
-
-        // Canvas animation background loop framework
-        function gameLoop() {
-            // Refresh screen view window size cleanly
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (gameState === 'playing') {
-                drawCourtEnvironment();
-            } else {
-                drawMenuBackground();
-            }
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        function drawMenuBackground() {
-            // Draw an abstract canvas graphic system so screen isn't pitch black behind windows
-            ctx.fillStyle = '#1e1e24';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw a subtle design shape onto the canvas
-            ctx.fillStyle = 'rgba(255, 107, 43, 0.05)';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 200, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        function drawCourtEnvironment() {
-            // Hardwood floor base background color line
-            ctx.fillStyle = '#bc6c25';
-            ctx.fillRect(0, 420, canvas.width, 80);
-            
-            // Court painted floor accent line lines markings
-            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(50, 420, canvas.width - 100, 1);
-            
-            // Three point line system arc circle mapping paths
-            ctx.beginPath();
-            ctx.arc(800, 420, 220, Math.PI, 1.5 * Math.PI);
-            ctx.stroke();
-
-            // Basketball Hoop Stand poles right-side layout placements
-            ctx.fillStyle = '#495057';
-            ctx.fillRect(740, 180, 15, 240); // Main Pole
-            ctx.fillRect(700, 180, 40, 10);  // Support Arm
-            
-            // Backboard graphics box
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.fillRect(690, 130, 10, 80);
-            ctx.strokeStyle = '#e63946';
-            ctx.strokeRect(690, 150, 10, 40);
-
-            // Orange Rim structure loop hook 
-            ctx.fillStyle = '#ff4d00';
-            ctx.fillRect(650, 175, 40, 8);
-
-            // Net paths
-            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(652, 183);
-            ctx.lineTo(658, 210);
-            ctx.lineTo(682, 210);
-            ctx.lineTo(688, 183);
-            ctx.stroke();
-
-            // Render Player Avatar inside screen area boundaries layout tracking
-            const userColor = skinsDatabase.find(s => s.id === equippedSkinId)?.color || '#ff6b2b';
-            ctx.fillStyle = userColor;
-            ctx.beginPath();
-            ctx.arc(200, 390, 25, 0, Math.PI * 2); // Player safe circle boundary point
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Label player node tag overlay
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 12px sans-serif';
-            ctx.fillText("YOU", 188, 350);
-
-            // Render a bouncing basketball preview system object element onto surface grid
-            let ballY = 390 + Math.sin(Date.now() * 0.007) * 20; 
-            ctx.fillStyle = '#ff6b2b';
-            ctx.beginPath();
-            ctx.arc(245, ballY, 12, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // Instructions text overlay helper node
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.font = '14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Press keys [${keybinds.keyLeft}], [${keybinds.keyRight}], [${keybinds.keyShoot}], [${keybinds.keyDribble}] to test bindings.`, canvas.width/2, 80);
-            ctx.fillText("Demo Match Active! Use the interface controls or the top corner button to pause.", canvas.width/2, 105);
-            ctx.textAlign = 'left'; // reset standard mapping rules paths
-        }
-
-        // Initialize script logic cleanly on initial browser frame runtime load windows hooks
-        window.onload = init;
-    </script>
-</body>
-</html>
+                alert("You don't have enough Basketballs!
