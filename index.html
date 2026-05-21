@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swish Shot - 2D Basketball</title>
+    <style>
+        :root {
+            --bg-dark: #12161a;
+            --court-orange: #e65c00;
+            --court-dark: #f57c00;
+            --accent-blue: #00bcd4;
+            --panel-bg: rgba(30, 40, 50, 0.95);
+            --text-light: #f5f5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        /* Views management */
+        .view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        /* --- MAIN MENU --- */
+        #main-menu {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 20px var(--court-orange);
+            margin-bottom: 5px;
+            animation: bounce 2s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        .currency-display {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffb300;
+            border: 2px solid #ffb300;
+            margin-bottom: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 220px);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            background: linear-gradient(to right, var(--court-orange), #ff7300);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, filter 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.03);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #434343, #000000);
+            border: 1px solid #555;
+        }
+
+        /* --- SUB PANELS (Modals inside views) --- */
+        .panel {
+            width: 90%;
+            max-width: 700px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .panel-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--court-orange);
+            padding-bottom: 10px;
+            text-align: left;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff3333;
+            border: none;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* --- PLAY SETTINGS VIEW --- */
+        #play-settings-view, #settings-view, #skins-view, #leaderboard-view {
+            background: rgba(10, 15, 20, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+
+        .setting-row label {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .mode-selector, .volume-slider {
+            display: flex;
+            gap: 10px;
+        }
+
+        .selector-btn {
+            background: #2c3e50;
+            color: white;
+            border: 2px solid transparent;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .selector-btn.active {
+            background: var(--court-orange);
+            border-color: #fff;
+        }
+
+        /* --- CONTROLS / KEYBINDS --- */
+        .keybind-btn {
+            background: #34495e;
+            color: #00ffcc;
+            border: 1px solid #555;
+            padding: 6px 12px;
+            border-radius: 4px;
+            min-width: 80px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .keybind-btn.waiting {
+            background: #e74c3c;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        /* --- SKINS GRID --- */
+        .skins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .skin-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 190px;
+        }
+
+        .skin-card.owned { border-color: #27ae60; }
+        .skin-card.equipped { border-color: var(--accent-blue); background: rgba(0, 188, 212, 0.15); }
+        .skin-card:hover { background: rgba(255,255,255,0.1); }
+
+        .skin-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 auto 10px auto;
+            border: 2px solid #fff;
+        }
+
+        .skin-name { font-weight: bold; margin-bottom: 4px; font-size: 1rem;}
+        .skin-ability { font-size: 0.75rem; color: #aaa; margin-bottom: 8px; font-style: italic;}
+        .skin-cost { font-size: 0.9rem; color: #ffb300; font-weight: bold;}
+
+        /* --- LEADERBOARD --- */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .leaderboard-table th { background: rgba(0,0,0,0.3); color: var(--court-orange);}
+
+        /* --- GAME ENGINE CANVAS & HUD --- */
+        #game-view {
+            flex-direction: column;
+            background: #222;
+        }
+
+        #game-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .hud-score {
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: monospace;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 20px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            pointer-events: auto;
+        }
+
+        .hud-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid #fff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            pointer-events: auto;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #2c3e50;
+        }
+
+        /* --- PAUSE OVERLAY --- */
+        #pause-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 20;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        #pause-overlay h2 { font-size: 3rem; color: var(--court-orange); margin-bottom: 20px;}
+
+        /* --- MATCH END OVERLAY --- */
+        #end-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 25;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        #end-title { font-size: 3.5rem; font-weight: bold; }
+        #end-rewards { font-size: 1.5rem; color: #ffb300; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. MAIN MENU VIEW -->
+    <div id="main-menu" class="view active">
+        <h1 class="menu-title">Swish Shot</h1>
+        <div class="currency-display">🏀 <span id="menu-balls">0</span> Basketballs</div>
+        
+        <div class="menu-grid">
+            <button class="btn" onclick="openView('play-settings-view')">Play Match</button>
+            <button class="btn" onclick="openView('skins-view')">Skins Shop</button>
+            <button class="btn btn-secondary" onclick="openView('settings-view')">Settings</button>
+            <button class="btn btn-secondary" onclick="openView('leaderboard-view')">Leaderboard</button>
+        </div>
+    </div>
+
+    <!-- 2. PLAY MATCH SETTINGS MODAL -->
+    <div id="play-settings-view" class="view" onclick="closeViewCheck(event, 'play-settings-view')">
+        <div class="panel">
+            <button class="close-btn" onclick="closeView('play-settings-view')">X</button>
+            <h2 class="panel-title">Match Configuration</h2>
+            
+            <div class="setting-row">
+                <label>Match Type</label>
+                <div class="mode-selector" id="match-type-select">
+                    <button class="selector-btn active" onclick="setMatchType(1)">1 v 1</button>
+                    <button class="selector-btn" onclick="setMatchType(2)">2 v 2</button>
+                    <button class="selector-btn" onclick="setMatchType(3)">3 v 3</button>
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <label>Match Duration</label>
+                <div class="mode-selector" id="match-time-select">
+                    <button class="selector-btn active" onclick="setMatchTime(60)">1 Min</button>
+                    <button class="selector-btn" onclick="setMatchTime(120)">2 Min</button>
+                    <button class="selector-btn" onclick="setMatchTime(180)">3 Min</button>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" style="width: 100%; padding: 18px;" onclick="startMatch()">Start Match 🏀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CONFIGURATION & KEYBINDS SETTINGS -->
+    <div id="settings-view" class="view" onclick="closeViewCheck(event, 'settings-view')">
+        <div class="panel">
+            <button class="close-btn" onclick="closeView('settings-view')">X</button>
+            <h2 class="panel-title">Game Settings</h2>
+            
+            <h3 style="margin: 15px 0 10px 0; color: var(--court-orange);">Controls & Keybinds</h3>
+            <div class="setting-row">
+                <label>Move Left</label>
+                <button class="keybind-btn" id="key-left" onclick="rebindKey('left')">A</button>
+            </div>
+            <div class="setting-row">
+                <label>Move Right</label>
+                <button class="keybind-btn" id="key-right" onclick="rebindKey('right')">D</button>
+            </div>
+            <div class="setting-row">
+                <label>Jump</label>
+                <button class="keybind-btn" id="key-jump" onclick="rebindKey('jump')">W</button>
+            </div>
+            <div class="setting-row">
+                <label>Dribble / Steal</label>
+                <button class="keybind-btn" id="key-dribble" onclick="rebindKey('dribble')">F</button>
+            </div>
+            <div class="setting-row">
+                <label>Shoot Ball</label>
+                <button class="keybind-btn" id="key-shoot" onclick="rebindKey('shoot')">Space</button>
+            </div>
+
+            <h3 style="margin: 25px 0 10px 0; color: var(--court-orange);">Audio & Video</h3>
+            <div class="setting-row">
+                <label>SFX Volume</label>
+                <input type="range" min="0" max="100" value="70" style="width: 150px;" id="sfx-volume">
+            </div>
+            <div class="setting-row">
+                <label>Show Particle Effects</label>
+                <input type="checkbox" checked id="setting-particles" style="transform: scale(1.4);">
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. SKINS SHOP MODAL -->
+    <div id="skins-view" class="view" onclick="closeViewCheck(event, 'skins-view')">
+        <div class="panel" style="max-width: 800px;">
+            <button class="close-btn" onclick="closeView('skins-view')">X</button>
+            <h2 class="panel-title">Skins Shop & Abilities</h2>
+            <div class="currency-display" style="margin-bottom: 15px;">🏀 <span id="shop-balls">0</span></div>
+            
+            <div class="skins-grid" id="skins-container">
+                <!-- Loaded dynamically by Javascript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. LEADERBOARD MODAL -->
+    <div id="leaderboard-view" class="view" onclick="closeViewCheck(event, 'leaderboard-view')">
+        <div class="panel">
+            <button class="close-btn" onclick="closeView('leaderboard-view')">X</button>
+            <h2 class="panel-title">Global Bot Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player / Bot Name</th>
+                        <th>Difficulty</th>
+                        <th>Wins</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-data">
+                    <!-- Dynamically Loaded -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 6. ACTIVE GAME VIEW -->
+    <div id="game-view" class="view">
+        <div id="game-hud">
+            <div class="hud-score" style="color: #3498db;">PLAYER: <span id="hud-score-home">0</span></div>
+            <div class="hud-score" style="color: #fff; font-size: 1.6rem;" id="hud-timer">01:00</div>
+            <div class="hud-score" style="color: #e74c3c;">BOTS: <span id="hud-score-away">0</span></div>
+            <button class="hud-btn" onclick="pauseGame()">PAUSE (ESC)</button>
+        </div>
+
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Dynamic Pause Overlay -->
+        <div id="pause-overlay">
+            <h2>GAME PAUSED</h2>
+            <button class="btn" style="width: 200px;" onclick="resumeGame()">Resume</button>
+            <button class="btn btn-secondary" style="width: 200px;" onclick="openViewFromPause('settings-view')">Settings</button>
+            <button class="btn btn-secondary" style="width: 200px; background: #c0392b;" onclick="quitToMenu()">Exit to Menu</button>
+        </div>
+
+        <!-- Dynamic Match Over Overlay -->
+        <div id="end-overlay">
+            <div id="end-title">YOU WIN!</div>
+            <div id="end-rewards">+50 Basketballs Earned</div>
+            <button class="btn" style="width: 220px;" onclick="quitToMenu()">Return to Menu</button>
+        </div>
+    </div>
+
+    <!-- AUDIO SYNTH ENGINE (No asset dependencies!) -->
+    <script>
+        const AudioEngine = {
+            ctx: null,
+            init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            play(type) {
+                this.init();
+                let vol = document.getElementById('sfx-volume').value / 100;
+                if(vol <= 0) return;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                let now = this.ctx.currentTime;
+                if(type === 'bounce') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
+                    gain.gain.setValueAtTime(vol, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
+                } else if(type === 'swish') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+                    gain.gain.setValueAtTime(vol * 0.5, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
+                } else if(type === 'rim') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(220, now);
+                    gain.gain.setValueAtTime(vol * 0.8, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+                    osc.start(now); osc.stop(now + 0.08);
+                }
+            }
+        };
+    </script>
+
+    <!-- MAIN JAVASCRIPT GAME LOGIC -->
+    <script>
+        // --- GAME STATE & SAVE SYSTEMS ---
+        let gameState = {
+            balls: 0,
+            equippedSkin: 0,
+            ownedSkins: [0], // First skin always owned
+            keybinds: { left: 'KeyA', right: 'KeyD', jump: 'KeyW', dribble: 'KeyF', shoot: 'Space' },
+            matchType: 1, 
+            matchTime: 60
+        };
+
+        // 15 Custom Skins with dynamic gameplay perks
+        const SKINS_DATA = [
+            { id: 0, name: "Rookie Ball", cost: 0, color: "#e65c00", ability: "No Bonus Stats", speed: 1, jump: 1, shoot: 1 },
+            { id: 1, name: "Neon Surge", cost: 50, color: "#00ffcc", ability: "+10% Move Speed", speed: 1.1, jump: 1, shoot: 1 },
+            { id: 2, name: "Gravity Void", cost: 100, color: "#9b59b6", ability: "+15% Jump Height", speed: 1, jump: 1.15, shoot: 1 },
+            { id: 3, name: "Laser Focus", cost: 150, color: "#e74c3c", ability: "+10% Shot Accuracy", speed: 1, jump: 1, shoot: 1.1 },
+            { id: 4, name: "Gold Standard", cost: 200, color: "#f1c40f", ability: "+5% All Attributes", speed: 1.05, jump: 1.05, shoot: 1.05 },
+            { id: 5, name: "Frozen Ice", cost: 250, color: "#3498db", ability: "+15% Move Speed", speed: 1.15, jump: 1, shoot: 1 },
+            { id: 6, name: "Magma Core", cost: 300, color: "#d35400", ability: "+20% Release Power", speed: 1, jump: 1, shoot: 1.2 },
+            { id: 7, name: "Cyber Matrix", cost: 350, color: "#2ecc71", ability: "+10% Jump, +5% Speed", speed: 1.05, jump: 1.1, shoot: 1 },
+            { id: 8, name: "Shadow Walk", cost: 400, color: "#2c3e50", ability: "Steal range increased", speed: 1.05, jump: 1.05, shoot: 1 },
+            { id: 9, name: "Diamond Spark", cost: 450, color: "#e0f7fa", ability: "+15% Shot Power & Release", speed: 1, jump: 1, shoot: 1.15 },
+            { id: 10, name: "Hyperspace", cost: 500, color: "#ff007f", ability: "Ultimate Agility (+20% Speed)", speed: 1.2, jump: 1, shoot: 1 },
+            { id: 11, name: "Toxic Slime", cost: 550, color: "#7fff00", ability: "+20% Bounce Height", speed: 1, jump: 1.2, shoot: 1 },
+            { id: 12, name: "Quantum Reality", cost: 600, color: "#4b0082", ability: "+12% Jump, +12% Shot Accuracy", speed: 1, jump: 1.12, shoot: 1.12 },
+            { id: 13, name: "Solar Flare", cost: 700, color: "#ff4500", ability: "Elite Offense Max Buffs", speed: 1.1, jump: 1.1, shoot: 1.2 },
+            { id: 14, name: "GitHub Octo", cost: 800, color: "#ffffff", ability: "Developer Mode: +25% Speed & Jump", speed: 1.25, jump: 1.25, shoot: 1 }
+        ];
+
+        // Global Leaderboard Bots Data
+        let leaderboardPlayers = [
+            { name: "AlphaBot", difficulty: "Easy", wins: 12 },
+            { name: "OmegaBot", difficulty: "Normal", wins: 28 },
+            { name: "MechaDunk", difficulty: "Hard", wins: 45 },
+            { name: "CyberHooper", difficulty: "Normal", wins: 19 },
+            { name: "NetFlier", difficulty: "Easy", wins: 8 },
+            { name: "AI_Jordan", difficulty: "Hard", wins: 52 }
+        ];
+
+        // --- CORE NAVIGATION ---
+        function loadSaveData() {
+            let saved = localStorage.getItem('swish_shot_save');
+            if(saved) {
+                try {
+                    let parsed = JSON.parse(saved);
+                    gameState = {...gameState, ...parsed};
+                } catch(e) { console.error("Error parsing save file", e); }
+            }
+            updateCurrencyUI();
+            renderSkinsShop();
+            renderLeaderboard();
+            updateKeybindLabels();
+        }
+
+        function saveGame() {
+            localStorage.setItem('swish_shot_save', JSON.stringify(gameState));
+        }
+
+        function updateCurrencyUI() {
+            document.getElementById('menu-balls').innerText = gameState.balls;
+            document.getElementById('shop-balls').innerText = gameState.balls;
+        }
+
+        function openView(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeView(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function closeViewCheck(e, id) {
+            if(e.target.id === id) closeView(id);
+        }
+
+        function openViewFromPause(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        // --- SETTINGS MANAGEMENT ---
+        function setMatchType(num) {
+            gameState.matchType = num;
+            document.querySelectorAll('#match-type-select .selector-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === num - 1);
+            });
+            saveGame();
+        }
+
+        function setMatchTime(seconds) {
+            gameState.matchTime = seconds;
+            let idx = seconds === 60 ? 0 : (seconds === 120 ? 1 : 2);
+            document.querySelectorAll('#match-time-select .selector-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === idx);
+            });
+            saveGame();
+        }
+
+        function updateKeybindLabels() {
+            document.getElementById('key-left').innerText = gameState.keybinds.left.replace('Key','');
+            document.getElementById('key-right').innerText = gameState.keybinds.right.replace('Key','');
+            document.getElementById('key-jump').innerText = gameState.keybinds.jump.replace('Key','');
+            document.getElementById('key-dribble').innerText = gameState.keybinds.dribble.replace('Key','');
+            document.getElementById('key-shoot').innerText = gameState.keybinds.shoot.replace('Key','');
+        }
+
+        let waitingForKey = null;
+        function rebindKey(action) {
+            if(waitingForKey) return;
+            waitingForKey = action;
+            let btn = document.getElementById(`key-${action}`);
+            btn.innerText = "???";
+            btn.classList.add('waiting');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if(waitingForKey) {
+                let code = e.code;
+                if(code === 'Escape') code = 'Space'; // Don't allow breakout bind
+                gameState.keybinds[waitingForKey] = code;
+                let btn = document.getElementById(`key-${waitingForKey}`);
+                btn.classList.remove('waiting');
+                waitingForKey = null;
+                updateKeybindLabels();
+                saveGame();
+                e.preventDefault();
+            } else if(e.code === 'Escape' && isPlaying) {
+                togglePause();
+            }
+        });
+
+        // --- SHOP & SKINS ENGINE ---
+        function renderSkinsShop() {
+            const container = document.getElementById('skins-container');
+            container.innerHTML = '';
+            SKINS_DATA.forEach(skin => {
+                let isOwned = gameState.ownedSkins.includes(skin.id);
+                let isEquipped = gameState.equippedSkin === skin.id;
+                
+                let card = document.createElement('div');
+                card.className = `skin-card ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+                card.onclick = () => selectSkin(skin.id);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="skin-preview" style="background: ${skin.color}"></div>
+                        <div class="skin-name">${skin.name}</div>
+                        <div class="skin-ability">${skin.ability}</div>
+                    </div>
+                    <div class="skin-cost">${isEquipped ? 'EQUIPPED' : (isOwned ? 'OWNED' : '🏀 ' + skin.cost)}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectSkin(id) {
+            let skin = SKINS_DATA[id];
+            let isOwned = gameState.ownedSkins.includes(id);
+
+            if(isOwned) {
+                gameState.equippedSkin = id;
+            } else {
+                if(gameState.balls >= skin.cost) {
+                    gameState.balls -= skin.cost;
+                    gameState.ownedSkins.push(id);
+                    gameState.equippedSkin = id;
+                } else {
+                    alert("Not enough basketballs!");
+                    return;
+                }
+            }
+            saveGame();
+            updateCurrencyUI();
+            renderSkinsShop();
+        }
+
+        // --- LEADERBOARD BUILDER ---
+        function renderLeaderboard() {
+            // Sort simulated bots by high score wins
+            let sorted = [...leaderboardPlayers].sort((a,b) => b.wins - a.wins);
+            let tbody = document.getElementById('leaderboard-data');
+            tbody.innerHTML = '';
+            
